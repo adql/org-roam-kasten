@@ -9,6 +9,7 @@
   :lighter " ork"
   :keymap '(("n" . ork-next-physical-zettel)
             ("p" . ork-previous-physical-zettel)
+            ("o" . ork-follow-link-at-point)
             ("q" . quit-window)))
 
 (defun ork--index-p (node)
@@ -38,6 +39,23 @@ completion buffer."
 ;;           (point-max)
 ;;         (- (point) 1)))))
 
+(defun ork--node-content (node)
+  "Extract the content of NODE until the next sibling or child,
+excluding the property drawer."
+  (with-current-buffer (org-roam-node-find-noselect node)
+    (org-with-wide-buffer
+     (goto-char (org-roam-node-point node))
+     (let* ((content-begin-re (if (= 0 (org-roam-node-level node))
+                                  "^[^#: ]"
+                                ":end:\n+"))
+            (content-begin (save-excursion
+                             (re-search-forward content-begin-re nil t)))
+            (content-end (or (outline-next-heading)
+                             (point-max))))
+       (if (<= content-end content-begin)
+           ""
+         (buffer-substring-no-properties content-begin content-end))))))
+
 (defun ork--next-physical-node (node &optional prev)
   "Find the next physical node.
 If PREV is non-nil then find the previous node."
@@ -45,10 +63,11 @@ If PREV is non-nil then find the previous node."
         (fn (if prev #'outline-previous-heading
               #'outline-next-heading)))
     (with-current-buffer (org-roam-node-find-noselect node t)
-      (while (and (funcall fn)
-                  (not (org-entry-get (point) "ID"))))
-      (unless (= (point) begin)
-        (org-roam-node-at-point)))))
+      (org-with-wide-buffer
+       (while (and (funcall fn)
+                   (not (org-entry-get (point) "ID"))))
+       (unless (= (point) begin)
+         (org-roam-node-at-point))))))
 
 (defun ork-cycle-zettel ()
   (interactive)
@@ -60,20 +79,22 @@ If PREV is non-nil then find the previous node."
   "Loads and parses NODE into the buffer-local variables."
   (setq-local ork--current-node node
               ork--current-title (org-roam-node-title node)
-              ork--current-level (org-roam-node-level node)))
+              ork--current-level (org-roam-node-level node)
+              ork--current-content (ork--node-content node)))
 
-(defun ork--reload-buffer ()
-  "Reloads the kasten buffer with the current node."
+(defun ork--display-buffer ()
+  "(Re)display the kasten buffer with the current node."
   (when (ork--buffer-p)                 ;safety measure
     (let ((inhibit-read-only t))
       (erase-buffer)
-      (insert "* " ork--current-title))))
+      (insert "* " ork--current-title "\n\n" ork--current-content)
+      (goto-char (point-min)))))
 
-(defun ork--load-reload (kasten node)
-  "Loads a node and reloads the buffer."
+(defun ork--load-display (kasten node)
+  "Loads a node and (re)displays the buffer."
   (with-current-buffer kasten
     (ork--load-node node)
-    (ork--reload-buffer)))
+    (ork--display-buffer)))
 
 (defun ork--get-buffer-create ()
   (let ((buf (get-buffer-create ork-buffer-name)))
@@ -94,7 +115,7 @@ If PREV is non-nil then find the previous node."
                                    t))
          (kasten (ork--get-buffer-create)))
     (set-buffer kasten)
-    (ork--load-reload kasten node)
+    (ork--load-display kasten node)
     (switch-to-buffer kasten)
     (recenter)))
 
@@ -109,7 +130,7 @@ otherwise open it normally."
                                             (org-element-property :raw-link object)
                                             "id:"))))
           (if node
-              (ork--display-node-content (current-buffer) node)
+              (ork--load-display (current-buffer) node)
             (org-open-at-point)))
       (org-open-at-point))))
 
@@ -119,7 +140,7 @@ If PREV, display the previous physical zettel."
   (interactive)
   (let ((next-zettel (ork--next-physical-node ork--current-node prev)))
     (when next-zettel
-      (ork--load-reload (current-buffer) next-zettel))))
+      (ork--load-display (current-buffer) next-zettel))))
 
 (defun ork-previous-physical-zettel ()
   "Display the previous physical zettel in the current kasten."
