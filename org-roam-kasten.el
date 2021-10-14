@@ -101,6 +101,7 @@ If PREV is non-nil then find the previous node."
       (cd org-roam-directory)
       (org-mode)
       (org-roam-kasten-mode)
+      (flyspell-mode-off)
       (setq ork--buffer t)
       (read-only-mode))
     buf))
