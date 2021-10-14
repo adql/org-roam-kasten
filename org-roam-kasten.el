@@ -90,11 +90,10 @@ If PREV is non-nil then find the previous node."
       (insert "* " ork--current-title "\n\n" ork--current-content)
       (goto-char (point-min)))))
 
-(defun ork--load-display (kasten node)
-  "Loads a node and (re)displays the buffer."
-  (with-current-buffer kasten
-    (ork--load-node node)
-    (ork--display-buffer)))
+(defun ork--load-display (node)
+  "Loads NODE and (re)displays the buffer."
+  (ork--load-node node)
+  (ork--display-buffer))
 
 (defun ork--get-buffer-create ()
   (let ((buf (get-buffer-create ork-buffer-name)))
@@ -115,7 +114,7 @@ If PREV is non-nil then find the previous node."
                                    t))
          (kasten (ork--get-buffer-create)))
     (set-buffer kasten)
-    (ork--load-display kasten node)
+    (ork--load-display node)
     (switch-to-buffer kasten)
     (recenter)))
 
@@ -130,7 +129,7 @@ otherwise open it normally."
                                             (org-element-property :raw-link object)
                                             "id:"))))
           (if node
-              (ork--load-display (current-buffer) node)
+              (ork--load-display node)
             (org-open-at-point)))
       (org-open-at-point))))
 
@@ -140,7 +139,7 @@ If PREV, display the previous physical zettel."
   (interactive)
   (let ((next-zettel (ork--next-physical-node ork--current-node prev)))
     (when next-zettel
-      (ork--load-display (current-buffer) next-zettel))))
+      (ork--load-display next-zettel))))
 
 (defun ork-previous-physical-zettel ()
   "Display the previous physical zettel in the current kasten."
