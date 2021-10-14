@@ -9,6 +9,7 @@
   :lighter " ork"
   :keymap '(("n" . ork-next-physical-zettel)
             ("p" . ork-previous-physical-zettel)
+            ("c" . ork-examine-folgezettel)
             ("o" . ork-follow-link-at-point)
             ("q" . quit-window)))
 
@@ -69,6 +70,14 @@ If PREV is non-nil then find the previous node."
        (unless (= (point) begin)
          (org-roam-node-at-point))))))
 
+(defun ork--child-nodes (node)
+  (with-current-buffer (org-roam-node-find-noselect node)
+    (let* ((level (org-roam-node-level node))
+           (node-tree (org-map-entries 'org-roam-node-at-point nil
+                                       (if (= level 0) 'file 'tree))))
+      (seq-filter (lambda (node) (= (+ level 1) (org-roam-node-level node)))
+                  node-tree))))
+
 (defun ork-cycle-zettel ()
   (interactive)
   (save-excursion
@@ -77,18 +86,38 @@ If PREV is non-nil then find the previous node."
 
 (defun ork--load-node (node)
   "Loads and parses NODE into the buffer-local variables."
-  (setq-local ork--current-node node
-              ork--current-title (org-roam-node-title node)
-              ork--current-level (org-roam-node-level node)
-              ork--current-content (ork--node-content node)))
+  (when (ork--buffer-p)                 ;safety measure
+    (setq-local ork--current-node node
+                ork--current-title (org-roam-node-title node)
+                ork--current-level (org-roam-node-level node)
+                ork--current-content (ork--node-content node)
+                ork--current-child-nodes (ork--child-nodes node)
+                ork--currently-examining-folgezettel nil)))
+
+(defun ork--update-folgezettel-line ()
+  "Update the line displaying Folgezettel."
+  (when (ork--buffer-p)                 ;safety measure
+    (save-excursion
+      (let ((inhibit-read-only t)
+            (kill-whole-line nil)
+            (folge-title (when ork--currently-examining-folgezettel
+                           (org-roam-node-title
+                            (nth ork--currently-examining-folgezettel ork--current-child-nodes)))))
+        (goto-char (point-min))
+        (kill-line)
+        (if folge-title
+            (insert "** " folge-title)
+          (insert "# " (int-to-string (length ork--current-child-nodes)) " folgezettel"))))))
 
 (defun ork--display-buffer ()
   "(Re)display the kasten buffer with the current node."
   (when (ork--buffer-p)                 ;safety measure
     (let ((inhibit-read-only t))
       (erase-buffer)
+      (insert "# " (int-to-string (length ork--current-child-nodes)) " folgezettel\n\n")
       (insert "* " ork--current-title "\n\n" ork--current-content)
-      (goto-char (point-min)))))
+      (outline-previous-heading)
+      (org-cycle-internal-local))))
 
 (defun ork--load-display (node)
   "Loads NODE and (re)displays the buffer."
@@ -146,3 +175,13 @@ If PREV, display the previous physical zettel."
   "Display the previous physical zettel in the current kasten."
   (interactive)
   (ork-next-physical-zettel t))
+
+(defun ork-examine-folgezettel ()
+  (interactive)
+  (cond ((not ork--currently-examining-folgezettel)
+         (when ork--current-child-nodes
+           (setq ork--currently-examining-folgezettel 0)))
+        ((< ork--currently-examining-folgezettel (1- (length ork--current-child-nodes)))
+         (setq ork--currently-examining-folgezettel (1+ ork--currently-examining-folgezettel)))
+        ((setq ork--currently-examining-folgezettel nil)))
+  (ork--update-folgezettel-line))
