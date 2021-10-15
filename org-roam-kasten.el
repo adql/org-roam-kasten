@@ -10,6 +10,7 @@
   :keymap '(("]" . ork-next-physical-zettel)
             ("[" . ork-previous-physical-zettel)
             (" " . ork-examine-folgezettel)
+            ("^" . ork-parent-zettel)
             ("" . ork-follow-folgezettel-or-link-at-point)
             ("q" . quit-window)))
 
@@ -77,6 +78,13 @@ If PREV is non-nil then find the previous node."
                                        (if (= level 0) 'file 'tree))))
       (seq-filter (lambda (node) (= (+ level 1) (org-roam-node-level node)))
                   node-tree))))
+
+(defun ork--parent-node (node)
+  (with-current-buffer (org-roam-node-find-noselect node)
+    (while (and
+            (org-up-heading-or-point-min)
+            (not (org-roam-node-at-point))))
+    (org-roam-node-at-point)))
 
 (defun ork-cycle-zettel ()
   (interactive)
@@ -191,3 +199,8 @@ If PREV, display the previous physical zettel."
          (setq ork--currently-examining-folgezettel (1+ ork--currently-examining-folgezettel)))
         ((setq ork--currently-examining-folgezettel nil)))
   (ork--update-folgezettel-line))
+
+(defun ork-parent-zettel ()
+  (interactive)
+  (when-let ((parent (ork--parent-node ork--current-node)))
+    (ork--load-display parent)))
