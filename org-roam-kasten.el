@@ -81,10 +81,11 @@ If PREV is non-nil then find the previous node."
 
 (defun ork--parent-node (node)
   (with-current-buffer (org-roam-node-find-noselect node)
-    (while (and
-            (org-up-heading-or-point-min)
-            (not (org-roam-node-at-point))))
-    (org-roam-node-at-point)))
+    (unless (not (org-current-level))
+      (while (and
+              (org-up-heading-or-point-min)
+              (not (org-roam-node-at-point))))
+      (org-roam-node-at-point))))
 
 (defun ork-cycle-zettel ()
   (interactive)
