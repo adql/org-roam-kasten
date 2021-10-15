@@ -12,6 +12,7 @@
             (" " . ork-examine-folgezettel)
             ("^" . ork-parent-zettel)
             ("" . ork-follow-folgezettel-or-link-at-point)
+            ("o" . ork-visit-node)
             ("q" . quit-window)))
 
 (defun ork--index-p (node)
@@ -206,3 +207,9 @@ If PREV, display the previous physical zettel."
   (interactive)
   (when-let ((parent (ork--parent-node ork--current-node)))
     (ork--load-display parent)))
+
+(defun ork-visit-node (other-window)
+  "Visit the node currently in display (with prefix - in other window)."
+  (interactive "P")
+  (debug)
+  (org-roam-node-visit ork--current-node other-window))
