@@ -131,6 +131,8 @@ If PREV is non-nil then find the previous node."
       (org-mode)
       (org-roam-kasten-mode)
       (flyspell-mode-off)
+      (visual-line-mode)
+      (adaptive-wrap-prefix-mode)
       (setq ork--buffer t)
       (read-only-mode))
     buf))
