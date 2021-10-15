@@ -10,7 +10,7 @@
   :keymap '(("n" . ork-next-physical-zettel)
             ("p" . ork-previous-physical-zettel)
             ("c" . ork-examine-folgezettel)
-            ("o" . ork-follow-link-at-point)
+            ("" . ork-follow-folgezettel-or-link-at-point)
             ("q" . quit-window)))
 
 (defun ork--index-p (node)
@@ -148,20 +148,24 @@ If PREV is non-nil then find the previous node."
     (switch-to-buffer kasten)
     (recenter)))
 
-(defun ork-follow-link-at-point ()
-  "Follow the link in the kasten buffer if it's a node;
-otherwise open it normally."
+(defun ork-follow-folgezettel-or-link-at-point ()
+  "If currently examining a folgezettel, follow it.
+Otherwise if point is on a link: if it is a roam node, follow it;
+otherwise visit it normally in other window."
   (interactive)
-  (let ((object (org-element-context)))
-    (if (and (string-equal "link" (org-element-type object))
-             (string-equal "id" (org-element-property :type object)))
-        (let ((node (org-roam-node-from-id (string-trim-left
-                                            (org-element-property :raw-link object)
-                                            "id:"))))
-          (if node
-              (ork--load-display node)
-            (org-open-at-point)))
-      (org-open-at-point))))
+  (if ork--currently-examining-folgezettel
+      (ork--load-display (nth ork--currently-examining-folgezettel
+                              ork--current-child-nodes))
+      (let ((object (org-element-context)))
+        (if (and (string-equal "link" (org-element-type object))
+                 (string-equal "id" (org-element-property :type object)))
+            (let ((node (org-roam-node-from-id (string-trim-left
+                                                (org-element-property :raw-link object)
+                                                "id:"))))
+              (if node
+                  (ork--load-display node)
+                (org-open-at-point)))
+          (org-open-at-point)))))
 
 (defun ork-next-physical-zettel (&optional prev)
   "Display the next physical zettel in the current kasten.
