@@ -7,9 +7,9 @@
 
 (define-minor-mode org-roam-kasten-mode ""
   :lighter " ork"
-  :keymap '(("n" . ork-next-physical-zettel)
-            ("p" . ork-previous-physical-zettel)
-            ("c" . ork-examine-folgezettel)
+  :keymap '(("]" . ork-next-physical-zettel)
+            ("[" . ork-previous-physical-zettel)
+            (" " . ork-examine-folgezettel)
             ("" . ork-follow-folgezettel-or-link-at-point)
             ("q" . quit-window)))
 
