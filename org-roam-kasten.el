@@ -211,5 +211,4 @@ If PREV, display the previous physical zettel."
 (defun ork-visit-node (other-window)
   "Visit the node currently in display (with prefix - in other window)."
   (interactive "P")
-  (debug)
   (org-roam-node-visit ork--current-node other-window))
