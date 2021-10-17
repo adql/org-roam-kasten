@@ -12,6 +12,8 @@
             (" " . ork-examine-folgezettel)
             ("^" . ork-parent-zettel)
             ("\r" . ork-follow-folgezettel-or-link-at-point)
+            ("\t" . ork-show-content-or-next-link)
+            ([backtab] . org-previous-link)
             ("o" . ork-visit-node)
             ("q" . quit-window)))
 
@@ -154,6 +156,13 @@ If PREV is non-nil then find the previous node."
     (ork--load-display node)
     (switch-to-buffer kasten)
     (recenter)))
+
+(defun ork-show-content-or-next-link ()
+  "Show the subtree if it is folded. Otherwise go to next link."
+  (interactive)
+  (if (string-equal org-cycle-subtree-status "folded")
+      (org-cycle)
+    (org-next-link)))
 
 (defun ork-follow-folgezettel-or-link-at-point ()
   "If currently examining a folgezettel, follow it.
