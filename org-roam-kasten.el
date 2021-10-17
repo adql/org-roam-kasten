@@ -215,3 +215,5 @@ If PREV, display the previous physical zettel."
   "Visit the node currently in display (with prefix - in other window)."
   (interactive "P")
   (org-roam-node-visit ork--current-node other-window))
+
+(provide 'org-roam-kasten)
