@@ -11,7 +11,7 @@
             ("[" . ork-previous-physical-zettel)
             (" " . ork-examine-folgezettel)
             ("^" . ork-parent-zettel)
-            ("" . ork-follow-folgezettel-or-link-at-point)
+            ("\r" . ork-follow-folgezettel-or-link-at-point)
             ("o" . ork-visit-node)
             ("q" . quit-window)))
 
