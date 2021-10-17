@@ -88,12 +88,6 @@ If PREV is non-nil then find the previous node."
               (not (org-roam-node-at-point))))
       (org-roam-node-at-point))))
 
-(defun ork-cycle-zettel ()
-  (interactive)
-  (save-excursion
-    (if (char-equal ?* (char-after (point-min)))
-        (org-cycle-internal-local))))
-
 (defun ork--load-node (node)
   "Loads and parses NODE into the buffer-local variables."
   (when (ork--buffer-p)                 ;safety measure
