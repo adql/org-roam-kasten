@@ -144,6 +144,7 @@ If PREV is non-nil then find the previous node."
       (read-only-mode))
     buf))
 
+;;;###autoload
 (defun ork-enter (&optional other-window initial-input)
   "Find a node for entering the Zettelkasten."
   (interactive current-prefix-arg)
