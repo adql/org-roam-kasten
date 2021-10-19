@@ -44,6 +44,16 @@
 (defvar ork-index-tag "@topic"
   "Tag defining Zettelkasten entry nodes.")
 
+;;;;; Local variables for the kasten buffer
+
+(defvar-local ork--history nil)
+(defvar-local ork--current-node nil)
+(defvar-local ork--current-title nil)
+(defvar-local ork--current-level nil)
+(defvar-local ork--current-content nil)
+(defvar-local ork--current-child-nodes nil)
+(defvar-local ork--currently-examining-folgezettel nil)
+
 (make-variable-buffer-local 'ork--buffer)
 
 ;;;;; Keymaps
@@ -203,12 +213,12 @@ If PREV is non-nil then find the previous node."
 (defun ork--load-node (node)
   "Loads and parses NODE into the buffer-local variables."
   (when (ork--buffer-p)                 ;safety measure
-    (setq-local ork--current-node node
-                ork--current-title (org-roam-node-title node)
-                ork--current-level (org-roam-node-level node)
-                ork--current-content (ork--node-content node)
-                ork--current-child-nodes (ork--child-nodes node)
-                ork--currently-examining-folgezettel nil)))
+    (setq ork--current-node node
+          ork--current-title (org-roam-node-title node)
+          ork--current-level (org-roam-node-level node)
+          ork--current-content (ork--node-content node)
+          ork--current-child-nodes (ork--child-nodes node)
+          ork--currently-examining-folgezettel nil)))
 
 (defun ork--update-folgezettel-line ()
   "Update the line displaying Folgezettel."
