@@ -82,6 +82,7 @@
   :lighter " ork"
   :keymap '(("]" . ork-next-physical-zettel)
             ("[" . ork-previous-physical-zettel)
+            ("l" . ork-history-back)
             (" " . ork-examine-folgezettel)
             ("^" . ork-parent-zettel)
             ("\r" . ork-follow-folgezettel-or-link-at-point)
@@ -98,6 +99,15 @@
   (if (string-equal org-cycle-subtree-status "folded")
       (org-cycle)
     (org-next-link)))
+
+(defun ork-history-back ()
+  "Move back in history in current kasten node."
+  (interactive)
+  (when (ork--buffer-p)
+    (if-let ((node (pop ork--history)))
+        (progn (ork--load-display node)
+               (pop ork--history))
+      (user-error "No further history."))))
 
 (defun ork-follow-folgezettel-or-link-at-point ()
   "If currently examining a folgezettel, follow it.
@@ -213,6 +223,8 @@ If PREV is non-nil then find the previous node."
 (defun ork--load-node (node)
   "Loads and parses NODE into the buffer-local variables."
   (when (ork--buffer-p)                 ;safety measure
+    (when ork--current-node
+      (push ork--current-node ork--history))
     (setq ork--current-node node
           ork--current-title (org-roam-node-title node)
           ork--current-level (org-roam-node-level node)
