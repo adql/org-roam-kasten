@@ -253,16 +253,17 @@ If PREV is non-nil then find the previous node."
 (defun ork--get-buffer-create ()
   (let ((buf (get-buffer-create ork-buffer-name)))
     (with-current-buffer buf
-      (cd org-roam-directory)
-      (org-mode)
-      (org-roam-kasten-mode)
-      (flyspell-mode-off)
-      (visual-line-mode)
-      (visual-fill-column-mode)
-      (adaptive-wrap-prefix-mode)
-      (setq ork--buffer t)
-      (read-only-mode))
-    buf))
+      (unless (ork--buffer-p)               ;test if the buffer is new
+        (cd org-roam-directory)
+        (org-mode)
+        (org-roam-kasten-mode)
+        (flyspell-mode-off)
+        (visual-line-mode)
+        (visual-fill-column-mode)
+        (adaptive-wrap-prefix-mode)
+        (read-only-mode)
+        (setq ork--buffer t))
+      buf)))
 
 ;;;; Footer
 
