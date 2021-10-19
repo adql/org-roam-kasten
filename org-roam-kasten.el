@@ -1,9 +1,72 @@
+;;; org-roam-kasten.el --- Browse your Zettelkasten with a "physical" feeling  -*- lexical-binding: t; -*-
+
+;; Copyright (C) 2021 Amir Dekel
+
+;; Author: Amir Dekel
+;; URL: https://example.com/package-name.el
+;; Version: 0.1-alpha
+;; Package-Requires: ((org-roam "2.0.0") visual-fill-column adaptive-wrap)
+;; Keywords: org-mode roam convenience
+
+;; This file is not part of GNU Emacs.
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;; TODO
+
+;;;; Requirements
+
+(require 'org-roam)
+(require 'visual-fill-column)
+(require 'adaptive-wrap)
+
+;;;; Customization
+
+;; TODO
+
+;;;; Variables
+
 (defvar ork-buffer-name "Zettelkasten")
 
 (defvar ork-index-tag "@topic"
   "Tag defining Zettelkasten entry nodes.")
 
 (make-variable-buffer-local 'ork--buffer)
+
+;;;;; Keymaps
+
+;; TODO: Use separate keymap; possible with the template's snippet.
+
+;;;; Commands
+
+;;;###autoload
+(defun ork-enter (&optional other-window initial-input)
+  "Find a node for entering the Zettelkasten."
+  (interactive current-prefix-arg)
+  (let* ((node (org-roam-node-read initial-input
+                                   'ork--index-p
+                                   'org-roam-node-read-sort-by-file-mtime
+                                   t))
+         (kasten (ork--get-buffer-create)))
+    (set-buffer kasten)
+    (ork--load-display node)
+    (switch-to-buffer kasten)
+    (recenter)))
+
+;;;; Functions
 
 (define-minor-mode org-roam-kasten-mode ""
   :lighter " ork"
@@ -17,6 +80,69 @@
             ("o" . ork-visit-node)
             ("q" . quit-window)))
 
+;;;;; Public
+
+(defun ork-show-content-or-next-link ()
+  "Show the subtree if it is folded. Otherwise go to next link."
+  (interactive)
+  (if (string-equal org-cycle-subtree-status "folded")
+      (org-cycle)
+    (org-next-link)))
+
+(defun ork-follow-folgezettel-or-link-at-point ()
+  "If currently examining a folgezettel, follow it.
+Otherwise if point is on a link: if it is a roam node, follow it;
+otherwise visit it normally in other window."
+  (interactive)
+  (if ork--currently-examining-folgezettel
+      (ork--load-display (nth ork--currently-examining-folgezettel
+                              ork--current-child-nodes))
+      (let ((object (org-element-context)))
+        (if (and (string-equal "link" (org-element-type object))
+                 (string-equal "id" (org-element-property :type object)))
+            (let ((node (org-roam-node-from-id (string-trim-left
+                                                (org-element-property :raw-link object)
+                                                "id:"))))
+              (if node
+                  (ork--load-display node)
+                (org-open-at-point)))
+          (org-open-at-point)))))
+
+(defun ork-next-physical-zettel (&optional prev)
+  "Display the next physical zettel in the current kasten.
+If PREV, display the previous physical zettel."
+  (interactive)
+  (let ((next-zettel (ork--next-physical-node ork--current-node prev)))
+    (when next-zettel
+      (ork--load-display next-zettel))))
+
+(defun ork-previous-physical-zettel ()
+  "Display the previous physical zettel in the current kasten."
+  (interactive)
+  (ork-next-physical-zettel t))
+
+(defun ork-examine-folgezettel ()
+  (interactive)
+  (cond ((not ork--currently-examining-folgezettel)
+         (when ork--current-child-nodes
+           (setq ork--currently-examining-folgezettel 0)))
+        ((< ork--currently-examining-folgezettel (1- (length ork--current-child-nodes)))
+         (setq ork--currently-examining-folgezettel (1+ ork--currently-examining-folgezettel)))
+        ((setq ork--currently-examining-folgezettel nil)))
+  (ork--update-folgezettel-line))
+
+(defun ork-parent-zettel ()
+  (interactive)
+  (when-let ((parent (ork--parent-node ork--current-node)))
+    (ork--load-display parent)))
+
+(defun ork-visit-node (other-window)
+  "Visit the node currently in display (with prefix - in other window)."
+  (interactive "P")
+  (org-roam-node-visit ork--current-node other-window))
+
+;;;;; Private
+
 (defun ork--index-p (node)
   "Query whether the node is an index node. Only nodes tagged
 with `ork-index-tag' will be included in the
@@ -27,22 +153,6 @@ completion buffer."
   "Return true if the current buffer is ork buffer."
   (and (boundp 'ork--buffer)
        ork--buffer))
-
-;; (defun ork--node-begin-point (node)
-;;   (- (org-roam-node-point node) 1))
-
-;; (defun ork--node-end-point (node)
-;;   (let ((begin (org-roam-node-point node))
-;;         (level (org-roam-node-level node)))
-;;     (save-excursion
-;;       (set-buffer (org-roam-node-find-noselect node))
-;;       (goto-char begin)
-;;       (while (and (outline-next-heading)
-;;                   (not (org-entry-get (point) "ID"))
-;;                   (<= level (org-current-level))))
-;;       (if (= (point) (point-max))
-;;           (point-max)
-;;         (- (point) 1)))))
 
 (defun ork--node-content (node)
   "Extract the content of NODE until the next sibling or child,
@@ -144,77 +254,8 @@ If PREV is non-nil then find the previous node."
       (read-only-mode))
     buf))
 
-;;;###autoload
-(defun ork-enter (&optional other-window initial-input)
-  "Find a node for entering the Zettelkasten."
-  (interactive current-prefix-arg)
-  (let* ((node (org-roam-node-read initial-input
-                                   'ork--index-p
-                                   'org-roam-node-read-sort-by-file-mtime
-                                   t))
-         (kasten (ork--get-buffer-create)))
-    (set-buffer kasten)
-    (ork--load-display node)
-    (switch-to-buffer kasten)
-    (recenter)))
-
-(defun ork-show-content-or-next-link ()
-  "Show the subtree if it is folded. Otherwise go to next link."
-  (interactive)
-  (if (string-equal org-cycle-subtree-status "folded")
-      (org-cycle)
-    (org-next-link)))
-
-(defun ork-follow-folgezettel-or-link-at-point ()
-  "If currently examining a folgezettel, follow it.
-Otherwise if point is on a link: if it is a roam node, follow it;
-otherwise visit it normally in other window."
-  (interactive)
-  (if ork--currently-examining-folgezettel
-      (ork--load-display (nth ork--currently-examining-folgezettel
-                              ork--current-child-nodes))
-      (let ((object (org-element-context)))
-        (if (and (string-equal "link" (org-element-type object))
-                 (string-equal "id" (org-element-property :type object)))
-            (let ((node (org-roam-node-from-id (string-trim-left
-                                                (org-element-property :raw-link object)
-                                                "id:"))))
-              (if node
-                  (ork--load-display node)
-                (org-open-at-point)))
-          (org-open-at-point)))))
-
-(defun ork-next-physical-zettel (&optional prev)
-  "Display the next physical zettel in the current kasten.
-If PREV, display the previous physical zettel."
-  (interactive)
-  (let ((next-zettel (ork--next-physical-node ork--current-node prev)))
-    (when next-zettel
-      (ork--load-display next-zettel))))
-
-(defun ork-previous-physical-zettel ()
-  "Display the previous physical zettel in the current kasten."
-  (interactive)
-  (ork-next-physical-zettel t))
-
-(defun ork-examine-folgezettel ()
-  (interactive)
-  (cond ((not ork--currently-examining-folgezettel)
-         (when ork--current-child-nodes
-           (setq ork--currently-examining-folgezettel 0)))
-        ((< ork--currently-examining-folgezettel (1- (length ork--current-child-nodes)))
-         (setq ork--currently-examining-folgezettel (1+ ork--currently-examining-folgezettel)))
-        ((setq ork--currently-examining-folgezettel nil)))
-  (ork--update-folgezettel-line))
-
-(defun ork-parent-zettel ()
-  (interactive)
-  (when-let ((parent (ork--parent-node ork--current-node)))
-    (ork--load-display parent)))
-
-(defun ork-visit-node (other-window)
-  "Visit the node currently in display (with prefix - in other window)."
-  (interactive "P")
-  (org-roam-node-visit ork--current-node other-window))
+;;;; Footer
 
 (provide 'org-roam-kasten)
+
+;;; org-roam-kasten.el ends here
