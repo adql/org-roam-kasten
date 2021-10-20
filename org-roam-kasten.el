@@ -117,7 +117,8 @@
   (when (ork--buffer-p)
     (if-let ((node (pop ork--history-forward)))
         (progn (push ork--current-node ork--history)
-               (ork--load-display node t)))))
+               (ork--load-display node t))
+      (user-error "No further forward history."))))
 
 (defun ork-follow-folgezettel-or-link-at-point ()
   "If currently examining a folgezettel, follow it.
