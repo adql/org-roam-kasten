@@ -47,6 +47,7 @@
 ;;;;; Local variables for the kasten buffer
 
 (defvar-local ork--history nil)
+(defvar-local ork--history-forward nil)
 (defvar-local ork--current-node nil)
 (defvar-local ork--current-title nil)
 (defvar-local ork--current-level nil)
@@ -83,6 +84,7 @@
   :keymap '(("]" . ork-next-physical-zettel)
             ("[" . ork-previous-physical-zettel)
             ("l" . ork-history-back)
+            ("r" . ork-history-forward)
             (" " . ork-examine-folgezettel)
             ("^" . ork-parent-zettel)
             ("\r" . ork-follow-folgezettel-or-link-at-point)
@@ -105,9 +107,17 @@
   (interactive)
   (when (ork--buffer-p)
     (if-let ((node (pop ork--history)))
-        (progn (ork--load-display node)
-               (pop ork--history))
+        (progn (push ork--current-node ork--history-forward)
+               (ork--load-display node t))
       (user-error "No further history."))))
+
+(defun ork-history-forward ()
+  "Move forward in history in current kasten node."
+  (interactive)
+  (when (ork--buffer-p)
+    (if-let ((node (pop ork--history-forward)))
+        (progn (push ork--current-node ork--history)
+               (ork--load-display node t)))))
 
 (defun ork-follow-folgezettel-or-link-at-point ()
   "If currently examining a folgezettel, follow it.
@@ -220,11 +230,15 @@ If PREV is non-nil then find the previous node."
               (not (org-roam-node-at-point))))
       (org-roam-node-at-point))))
 
-(defun ork--load-node (node)
-  "Loads and parses NODE into the buffer-local variables."
+(defun ork--load-node (node &optional preserve-history)
+  "Loads and parses NODE into the buffer-local variables.
+If PRESERVE-HISTORY, don't reset ork--history-forward and don't add
+to ork--history (used when moving back/forwards in history)."
   (when (ork--buffer-p)                 ;safety measure
-    (when ork--current-node
-      (push ork--current-node ork--history))
+    (unless preserve-history
+      (setq ork--history-forward nil)
+      (when ork--current-node
+        (push ork--current-node ork--history)))
     (setq ork--current-node node
           ork--current-title (org-roam-node-title node)
           ork--current-level (org-roam-node-level node)
@@ -257,9 +271,10 @@ If PREV is non-nil then find the previous node."
       (outline-previous-heading)
       (org-cycle-internal-local))))
 
-(defun ork--load-display (node)
-  "Loads NODE and (re)displays the buffer."
-  (ork--load-node node)
+(defun ork--load-display (node &optional preserve-history)
+  "Loads NODE and (re)displays the buffer.
+Passes PRESERVE-HISTORY to `ork--load-node'."
+  (ork--load-node node preserve-history)
   (ork--display-buffer))
 
 (defun ork--get-buffer-create ()
