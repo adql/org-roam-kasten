@@ -1,4 +1,4 @@
-;;; org-roam-kasten.el --- Browse your Zettelkasten with a "physical" feeling  -*- lexical-binding: t; -*-
+;;; org-roam-kasten.el --- Browse your zettelkasten with a "physical" feeling  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2021 Amir Dekel
 
@@ -40,7 +40,7 @@
 (defvar ork-buffer-name "*Zettelkasten*")
 
 (defvar ork-index-tag "@topic"
-  "Tag defining Zettelkasten entry nodes.")
+  "Tag defining zettelkasten entry nodes.")
 
 ;;;;; Local variables for the kasten buffer
 
@@ -63,7 +63,7 @@
 
 ;;;###autoload
 (defun ork-enter (&optional other-window initial-input)
-  "Find a node for entering the Zettelkasten."
+  "Find a node for entering the zettelkasten."
   (interactive current-prefix-arg)
   (let* ((node (org-roam-node-read initial-input
                                    'ork--index-p
