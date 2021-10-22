@@ -39,7 +39,7 @@
 
 ;;;; Variables
 
-(defvar ork-buffer-name "Zettelkasten")
+(defvar ork-buffer-name "*Zettelkasten*")
 
 (defvar ork-index-tag "@topic"
   "Tag defining Zettelkasten entry nodes.")
