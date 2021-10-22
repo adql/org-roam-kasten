@@ -71,7 +71,7 @@
                                    t))
          (kasten (ork--get-buffer-create)))
     (set-buffer kasten)
-    (ork--load-display node)
+    (ork--load-refresh node)
     (switch-to-buffer kasten)
     (recenter)))
 
@@ -106,7 +106,7 @@
   (when (ork--buffer-p)
     (if-let ((node (pop ork--history)))
         (progn (push ork--current-node ork--history-forward)
-               (ork--load-display node t t))
+               (ork--load-refresh node t t))
       (user-error "No further history."))))
 
 (defun ork-history-forward ()
@@ -115,7 +115,7 @@
   (when (ork--buffer-p)
     (if-let ((node (pop ork--history-forward)))
         (progn (push ork--current-node ork--history)
-               (ork--load-display node t t))
+               (ork--load-refresh node t t))
       (user-error "No further forward history."))))
 
 (defun ork-follow-folgezettel-or-link-at-point ()
@@ -124,7 +124,7 @@ Otherwise if point is on a link: if it is a roam node, follow it;
 otherwise visit it normally in other window."
   (interactive)
   (if ork--currently-examining-folgezettel
-      (ork--load-display (nth ork--currently-examining-folgezettel
+      (ork--load-refresh (nth ork--currently-examining-folgezettel
                               ork--current-child-nodes))
       (let ((object (org-element-context)))
         (if (and (string-equal "link" (org-element-type object))
@@ -133,7 +133,7 @@ otherwise visit it normally in other window."
                                                 (org-element-property :raw-link object)
                                                 "id:"))))
               (if node
-                  (ork--load-display node)
+                  (ork--load-refresh node)
                 (org-open-at-point)))
           (org-open-at-point)))))
 
@@ -143,7 +143,7 @@ If PREV, display the previous physical zettel."
   (interactive)
   (let ((next-zettel (ork--next-physical-node ork--current-node prev)))
     (when next-zettel
-      (ork--load-display next-zettel nil t))))
+      (ork--load-refresh next-zettel nil t))))
 
 (defun ork-previous-physical-zettel ()
   "Display the previous physical zettel in the current kasten."
@@ -163,7 +163,7 @@ If PREV, display the previous physical zettel."
 (defun ork-parent-zettel ()
   (interactive)
   (when-let ((parent (ork--parent-node ork--current-node)))
-    (ork--load-display parent nil t)))
+    (ork--load-refresh parent nil t)))
 
 (defun ork-visit-node (other-window)
   "Visit the node currently in display (with prefix - in other window)."
@@ -260,8 +260,8 @@ to ork--history (used when moving back/forwards in history)."
             (insert "** " folge-title)
           (insert "# " (int-to-string (length ork--current-child-nodes)) " folgezettel"))))))
 
-(defun ork--display-buffer (&optional folded)
-  "(Re)display the kasten buffer with the current node.
+(defun ork--refresh-buffer (&optional folded)
+  "Refresh the kasten buffer to display the current loaded node.
 If FOLDED, fold the heading.'"
   (when (ork--buffer-p)                 ;safety measure
     (let ((inhibit-read-only t))
@@ -272,12 +272,12 @@ If FOLDED, fold the heading.'"
       (when folded
         (org-cycle-internal-local)))))
 
-(defun ork--load-display (node &optional preserve-history folded)
-  "Loads NODE and (re)displays the buffer.
+(defun ork--load-refresh (node &optional preserve-history folded)
+  "Loads NODE and refreshes the buffer.
 Passes PRESERVE-HISTORY to `ork--load-node'.
-Passes FOLDED to `ork--display-buffer'."
+Passes FOLDED to `ork--refresh-buffer'."
   (ork--load-node node preserve-history)
-  (ork--display-buffer folded))
+  (ork--refresh-buffer folded))
 
 (defun ork--get-buffer-create ()
   (let ((buf (get-buffer-create ork-buffer-name)))
