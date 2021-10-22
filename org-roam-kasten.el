@@ -5,7 +5,7 @@
 ;; Author: Amir Dekel
 ;; URL: https://example.com/package-name.el
 ;; Version: 0.1-alpha
-;; Package-Requires: ((org-roam "2.0.0") visual-fill-column adaptive-wrap)
+;; Package-Requires: ((org-roam "2.0.0"))
 ;; Keywords: org-mode roam convenience
 
 ;; This file is not part of GNU Emacs.
@@ -30,8 +30,6 @@
 ;;;; Requirements
 
 (require 'org-roam)
-(require 'visual-fill-column)
-(require 'adaptive-wrap)
 
 ;;;; Customization
 
@@ -289,9 +287,6 @@ Passes FOLDED to `ork--display-buffer'."
         (org-mode)
         (org-roam-kasten-mode)
         (flyspell-mode-off)
-        (visual-line-mode)
-        (visual-fill-column-mode)
-        (adaptive-wrap-prefix-mode)
         (read-only-mode)
         (setq ork--buffer t))
       buf)))
