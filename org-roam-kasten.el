@@ -108,7 +108,7 @@
   (when (ork--buffer-p)
     (if-let ((node (pop ork--history)))
         (progn (push ork--current-node ork--history-forward)
-               (ork--load-display node t))
+               (ork--load-display node t t))
       (user-error "No further history."))))
 
 (defun ork-history-forward ()
@@ -117,7 +117,7 @@
   (when (ork--buffer-p)
     (if-let ((node (pop ork--history-forward)))
         (progn (push ork--current-node ork--history)
-               (ork--load-display node t))
+               (ork--load-display node t t))
       (user-error "No further forward history."))))
 
 (defun ork-follow-folgezettel-or-link-at-point ()
@@ -145,7 +145,7 @@ If PREV, display the previous physical zettel."
   (interactive)
   (let ((next-zettel (ork--next-physical-node ork--current-node prev)))
     (when next-zettel
-      (ork--load-display next-zettel))))
+      (ork--load-display next-zettel nil t))))
 
 (defun ork-previous-physical-zettel ()
   "Display the previous physical zettel in the current kasten."
@@ -165,7 +165,7 @@ If PREV, display the previous physical zettel."
 (defun ork-parent-zettel ()
   (interactive)
   (when-let ((parent (ork--parent-node ork--current-node)))
-    (ork--load-display parent)))
+    (ork--load-display parent nil t)))
 
 (defun ork-visit-node (other-window)
   "Visit the node currently in display (with prefix - in other window)."
@@ -262,21 +262,24 @@ to ork--history (used when moving back/forwards in history)."
             (insert "** " folge-title)
           (insert "# " (int-to-string (length ork--current-child-nodes)) " folgezettel"))))))
 
-(defun ork--display-buffer ()
-  "(Re)display the kasten buffer with the current node."
+(defun ork--display-buffer (&optional folded)
+  "(Re)display the kasten buffer with the current node.
+If FOLDED, fold the heading.'"
   (when (ork--buffer-p)                 ;safety measure
     (let ((inhibit-read-only t))
       (erase-buffer)
       (insert "# " (int-to-string (length ork--current-child-nodes)) " folgezettel\n\n")
       (insert "* " ork--current-title "\n\n" ork--current-content)
       (outline-previous-heading)
-      (org-cycle-internal-local))))
+      (when folded
+        (org-cycle-internal-local)))))
 
-(defun ork--load-display (node &optional preserve-history)
+(defun ork--load-display (node &optional preserve-history folded)
   "Loads NODE and (re)displays the buffer.
-Passes PRESERVE-HISTORY to `ork--load-node'."
+Passes PRESERVE-HISTORY to `ork--load-node'.
+Passes FOLDED to `ork--display-buffer'."
   (ork--load-node node preserve-history)
-  (ork--display-buffer))
+  (ork--display-buffer folded))
 
 (defun ork--get-buffer-create ()
   (let ((buf (get-buffer-create ork-buffer-name)))
