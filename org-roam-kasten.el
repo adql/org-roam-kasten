@@ -30,6 +30,7 @@
 ;;;; Requirements
 
 (require 'org-roam)
+(require 'cl-lib)                       ;technically it's already required by org-roam
 
 ;;;; Customization
 
@@ -221,6 +222,21 @@ If PREV is non-nil then find the previous node."
       (seq-filter (lambda (node) (= (+ level 1) (org-roam-node-level node)))
                   node-tree))))
 
+(defun ork--sibling-titles (node)
+  "Returns the titles of all sibling nodes of NODE.
+The titles are returned as a list of two lists, the first of
+preceding nodes, the second of following nodes."
+  (with-current-buffer (org-roam-node-find-noselect node)
+    (let ((level (org-roam-node-level node)))
+      (if (zerop level)
+          '(nil nil)
+        (let* ((nodes-at-level (org-map-entries (lambda ()
+                                                  (org-roam-node-title (org-roam-node-at-point)))
+                                                (concat "+LEVEL=" (number-to-string level) "+ID={.+}")
+                                                'file))
+               (node-index (seq-position nodes-at-level (org-roam-node-title node))))
+          (list (seq-take nodes-at-level node-index) (seq-drop nodes-at-level (1+ node-index))))))))
+
 (defun ork--parent-node (node)
   (with-current-buffer (org-roam-node-find-noselect node)
     (unless (not (org-current-level))
@@ -254,11 +270,34 @@ to ork--history (used when moving back/forwards in history)."
             (folge-title (when ork--currently-examining-folgezettel
                            (org-roam-node-title
                             (nth ork--currently-examining-folgezettel ork--current-child-nodes)))))
-        (goto-char (point-min))
+        (goto-line 3)
         (kill-line)
         (if folge-title
             (insert "** " folge-title)
           (insert "# " (int-to-string (length ork--current-child-nodes)) " folgezettel"))))))
+
+(defun ork--insert-zettel (&optional folded)
+  "Display the currently loaded node as a zettel.
+This means inserting `ork--current-title' and `ork--current-content'
+alongside information about folgezettel."
+  (insert "# " (int-to-string (length ork--current-child-nodes)) " folgezettel\n\n")
+  (insert "* " ork--current-title "\n\n" ork--current-content)
+  (outline-previous-heading)
+  (when folded
+    (org-cycle-internal-local)))
+
+(defun ork--insert-index ()
+  "Display the currently loaded node as an index."
+  (insert "# ~~ Index ~~\n\n")
+  (let ((folgezettel-titles (mapcar 'org-roam-node-title ork--current-child-nodes)))
+    (cl-destructuring-bind (titles-before titles-after)
+        (ork--sibling-titles ork--current-node)
+      (mapc (lambda (title) (insert "# " title "\n")) titles-before)
+      (insert "\n* " ork--current-title "\n\n" ork--current-content)
+      (mapc (lambda (title) (insert "# └ " title "\n")) folgezettel-titles)
+      (insert "\n")
+      (mapc (lambda (title) (insert "# " title "\n")) titles-after)
+      (outline-previous-heading))))
 
 (defun ork--refresh-buffer (&optional folded)
   "Refresh the kasten buffer to display the current loaded node.
@@ -266,11 +305,10 @@ If FOLDED, fold the heading.'"
   (when (ork--buffer-p)                 ;safety measure
     (let ((inhibit-read-only t))
       (erase-buffer)
-      (insert "# " (int-to-string (length ork--current-child-nodes)) " folgezettel\n\n")
-      (insert "* " ork--current-title "\n\n" ork--current-content)
-      (outline-previous-heading)
-      (when folded
-        (org-cycle-internal-local)))))
+      (insert "# ~~~ Zettelkasten ~~~\n\n")
+      (if (ork--index-p ork--current-node)
+          (ork--insert-index)
+        (ork--insert-zettel folded)))))
 
 (defun ork--load-refresh (node &optional preserve-history folded)
   "Loads NODE and refreshes the buffer.
