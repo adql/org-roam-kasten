@@ -127,16 +127,15 @@ otherwise visit it normally in other window."
   (if ork--currently-examining-folgezettel
       (ork--load-refresh (nth ork--currently-examining-folgezettel
                               ork--current-child-nodes))
-      (let ((object (org-element-context)))
-        (if (and (string-equal "link" (org-element-type object))
-                 (string-equal "id" (org-element-property :type object)))
-            (let ((node (org-roam-node-from-id (string-trim-left
-                                                (org-element-property :raw-link object)
-                                                "id:"))))
-              (if node
-                  (ork--load-refresh node)
-                (org-open-at-point)))
-          (org-open-at-point)))))
+    (let ((object (org-element-context)))
+      (when (string-equal "link" (org-element-type object))
+        (if (string-equal "id" (org-element-property :type object))
+            (if-let ((node (org-roam-node-from-id (string-trim-left
+                                                   (org-element-property :raw-link object)
+                                                   "id:"))))
+                (ork--load-refresh node)
+              (org-open-at-point))
+          (org-open-at-point))))))
 
 (defun ork-next-physical-zettel (&optional prev)
   "Display the next physical zettel in the current kasten.
