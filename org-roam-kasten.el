@@ -90,6 +90,7 @@
             ("\t" . ork-show-content-or-next-link)
             ([backtab] . org-previous-link)
             ("o" . ork-visit-node)
+            ("\C-cl" . ork-store-link)
             ("q" . quit-window)))
 
 ;;;;; Public
@@ -169,6 +170,12 @@ If PREV, display the previous physical zettel."
   "Visit the node currently in display (with prefix - in other window)."
   (interactive "P")
   (org-roam-node-visit ork--current-node other-window))
+
+(defun ork-store-link ()
+  "Store the link to the node currently in display."
+  (interactive)
+  (with-current-buffer (org-roam-node-find-noselect ork--current-node)
+    (org-store-link nil t)))
 
 ;;;;; Private
 
