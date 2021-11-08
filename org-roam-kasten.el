@@ -82,6 +82,8 @@
   :lighter " ork"
   :keymap '(("]" . ork-next-physical-zettel)
             ("[" . ork-previous-physical-zettel)
+            ("n" . ork-next-zettel-same-level)
+            ("p" . ork-previous-zettel-same-level)
             ("l" . ork-history-back)
             ("r" . ork-history-forward)
             (" " . ork-examine-folgezettel)
@@ -138,11 +140,13 @@ otherwise visit it normally in other window."
               (org-open-at-point))
           (org-open-at-point))))))
 
-(defun ork-next-physical-zettel (&optional prev)
-  "Display the next physical zettel in the current kasten.
-If PREV, display the previous physical zettel."
+(defun ork-next-physical-zettel (&optional prev same-level)
+  "Display the next \"physical\" zettel in the current kasten.
+If PREV, display the previous physical zettel. If SAME-LEVEL,
+display the next or previous zettel at the same level under the
+current parent zettel."
   (interactive)
-  (let ((next-zettel (ork--next-physical-node ork--current-node prev)))
+  (let ((next-zettel (ork--next-node ork--current-node prev same-level)))
     (when next-zettel
       (ork--load-refresh next-zettel nil t))))
 
@@ -150,6 +154,18 @@ If PREV, display the previous physical zettel."
   "Display the previous physical zettel in the current kasten."
   (interactive)
   (ork-next-physical-zettel t))
+
+(defun ork-next-zettel-same-level ()
+  "Display the next zettel at the same level under the current
+parent zettel."
+  (interactive)
+  (ork-next-physical-zettel nil t))
+
+(defun ork-previous-zettel-same-level ()
+  "Display the previous zettel at the same level under the
+current parent zettel."
+  (interactive)
+  (ork-next-physical-zettel t t))
 
 (defun ork-examine-folgezettel ()
   (interactive)
@@ -207,18 +223,26 @@ excluding the property drawer."
            ""
          (buffer-substring-no-properties content-begin content-end))))))
 
-(defun ork--next-physical-node (node &optional prev)
-  "Find the next physical node.
-If PREV is non-nil then find the previous node."
-  (let ((begin (org-roam-node-point node))
-        (fn (if prev #'outline-previous-heading
-              #'outline-next-heading)))
-    (with-current-buffer (org-roam-node-find-noselect node t)
-      (org-with-wide-buffer
-       (while (and (funcall fn)
-                   (not (org-entry-get (point) "ID"))))
-       (unless (= (point) begin)
-         (org-roam-node-at-point))))))
+(defun ork--next-node (node &optional prev same-level)
+  "Find the next node, corresponding to the next \"physical\" zettel.
+If PREV is non-nil then find the previous node. If SAME-LEVEL is
+non-nil then find the next or previous node at the same level under
+the current parent heading."
+  (unless (and same-level
+               (= 0 (org-roam-node-level ork--current-node)))
+    (let ((begin (org-roam-node-point node))
+          (fn (cond ((and prev same-level) (lambda ()
+                                             (org-backward-heading-same-level 1)))
+                    (same-level (lambda ()
+                                  (org-forward-heading-same-level 1)))
+                    (prev #'outline-previous-heading)
+                    (t #'outline-next-heading))))
+      (with-current-buffer (org-roam-node-find-noselect node t)
+        (org-with-wide-buffer
+         (while (and (funcall fn)
+                     (not (org-entry-get (point) "ID"))))
+         (unless (= (point) begin)
+           (org-roam-node-at-point)))))))
 
 (defun ork--child-nodes (node)
   (with-current-buffer (org-roam-node-find-noselect node)
