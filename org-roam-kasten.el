@@ -195,6 +195,23 @@ current parent zettel."
 
 ;;;;; Private
 
+(defun ork--get-buffer-create ()
+  "Returns the zettelkasten buffer, possibly creating a new one.
+
+The buffer name is determined by `ork-buffer-name'."
+  (let ((buf (get-buffer-create ork-buffer-name)))
+    (with-current-buffer buf
+      (unless (ork--buffer-p)               ;test if the buffer is new
+        (cd org-roam-directory)
+        (org-mode)
+        (org-roam-kasten-mode)
+        (flyspell-mode-off)
+        (read-only-mode)
+        (setq ork--buffer t))
+      buf)))
+
+;;;;;; Predicates
+
 (defun ork--index-p (node)
   "Query whether the node is an index node. Only nodes tagged
 with `ork-index-tag' will be included in the
@@ -205,6 +222,8 @@ completion buffer."
   "Return true if the current buffer is ork buffer."
   (and (boundp 'ork--buffer)
        ork--buffer))
+
+;;;;;; Retrieval of content, metadata, related nodes, etc.
 
 (defun ork--node-content (node)
   "Extract the content of NODE until the next sibling or child,
@@ -274,6 +293,8 @@ preceding nodes, the second of following nodes."
               (org-up-heading-or-point-min)
               (not (org-roam-node-at-point))))
       (org-roam-node-at-point))))
+
+;;;;;; Buffer manipulation
 
 (defun ork--load-node (node &optional preserve-history)
   "Loads and parses NODE into the buffer-local variables.
@@ -346,18 +367,6 @@ Passes PRESERVE-HISTORY to `ork--load-node'.
 Passes FOLDED to `ork--refresh-buffer'."
   (ork--load-node node preserve-history)
   (ork--refresh-buffer folded))
-
-(defun ork--get-buffer-create ()
-  (let ((buf (get-buffer-create ork-buffer-name)))
-    (with-current-buffer buf
-      (unless (ork--buffer-p)               ;test if the buffer is new
-        (cd org-roam-directory)
-        (org-mode)
-        (org-roam-kasten-mode)
-        (flyspell-mode-off)
-        (read-only-mode)
-        (setq ork--buffer t))
-      buf)))
 
 ;;;; Footer
 
