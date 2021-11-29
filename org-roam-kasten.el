@@ -205,7 +205,6 @@ The buffer name is determined by `ork-buffer-name'."
         (cd org-roam-directory)
         (org-mode)
         (org-roam-kasten-mode)
-        (flyspell-mode-off)
         (read-only-mode)
         (setq ork--buffer t))
       buf)))
