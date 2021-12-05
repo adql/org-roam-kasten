@@ -246,8 +246,9 @@ excluding the property drawer."
 If PREV is non-nil then find the previous node. If SAME-LEVEL is
 non-nil then find the next or previous node at the same level under
 the current parent heading."
-  (unless (and same-level
-               (= 0 (org-roam-node-level ork--current-node)))
+  (if (and same-level
+           (= 0 ork--current-level))
+      (ork--next-node-other-file node prev t)
     (let ((begin (org-roam-node-point node))
           (fn (cond ((and prev same-level) (lambda ()
                                              (org-backward-heading-same-level 1)))
@@ -259,8 +260,37 @@ the current parent heading."
         (org-with-wide-buffer
          (while (and (funcall fn)
                      (not (org-entry-get (point) "ID"))))
-         (unless (= (point) begin)
+         (if (equal node (org-roam-node-at-point))
+             (ork--next-node-other-file node prev)
            (org-roam-node-at-point)))))))
+
+(defun ork--next-node-other-file (node &optional prev root)
+  "find the first node in a file next to that of NODE.
+If PREV, find the last node in a previous file.
+If ROOT, only consider level-0 nodes."
+  (let* ((node-file (org-roam-node-file node))
+         (dir-org-files (directory-files (file-name-directory node-file)
+                                         t "\\.org"))
+         (add (if prev -1 1))
+         (next-index (+ add (seq-position dir-org-files node-file)))
+         next-node)
+    (while (not (or (= next-index -1)
+                    (= next-index (length dir-org-files))
+                    next-node))
+      (let* ((query (vector :select [id level] :from 'nodes
+                            :where `(= file ,(nth next-index dir-org-files))
+                            :order :by 'pos))
+             (query-result (seq-filter (lambda (result)
+                                         (if root
+                                             (= 0 (cadr result)) t))
+                                       (org-roam-db-query query))))
+        (when query-result
+          (setq next-node (org-roam-node-from-id
+                           (if prev
+                               (caar (last query-result))
+                             (caar query-result)))))
+        (setq next-index (+ add next-index))))
+    next-node))
 
 (defun ork--child-nodes (node)
   (with-current-buffer (org-roam-node-find-noselect node)
