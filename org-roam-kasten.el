@@ -43,6 +43,9 @@
 (defvar ork-index-tag "@topic"
   "Tag defining zettelkasten entry nodes.")
 
+(defvar ork-directory-file-node-re "0_.*"
+  "Regex for the file holding a file-level node for the directory.")
+
 ;;;;; Local variables for the kasten buffer
 
 (defvar-local ork--history nil)
@@ -217,6 +220,12 @@ with `ork-index-tag' will be included in the
 completion buffer."
   (member ork-index-tag (org-roam-node-tags node)))
 
+(defun ork--directory-node-p (node)
+  "Return non-nil if the current node is the current directory's directory-node."
+  (and (= 0 (org-roam-node-level node))
+       (string-match-p ork-directory-file-node-re
+                       (file-name-nondirectory (org-roam-node-file node)))))
+
 (defun ork--buffer-p ()
   "Return true if the current buffer is ork buffer."
   (and (boundp 'ork--buffer)
@@ -296,9 +305,20 @@ If ROOT, only consider level-0 nodes."
   (with-current-buffer (org-roam-node-find-noselect node)
     (let* ((level (org-roam-node-level node))
            (node-tree (org-map-entries 'org-roam-node-at-point nil
-                                       (if (= level 0) 'file 'tree))))
-      (seq-filter (lambda (node) (= (+ level 1) (org-roam-node-level node)))
-                  node-tree))))
+                                       (if (= level 0) 'file 'tree)))
+           (heading-child-nodes (seq-filter (lambda (node)
+                                              (= (+ level 1) (org-roam-node-level node)))
+                                            node-tree)))
+      (if (ork--directory-node-p node)
+          (append (seq-filter (lambda (node) (not (ork--directory-node-p node)))
+                              (mapcar (lambda (file)
+                                        (let ((query (vector :select 'id :from 'nodes
+                                                             :where `(and (= level 0)
+                                                                          (= file ,file)))))
+                                          (org-roam-node-from-id (caar (org-roam-db-query query)))))
+                                      (directory-files (file-name-directory (org-roam-node-file node)) t "\\.org$")))
+                  heading-child-nodes)
+        heading-child-nodes))))
 
 (defun ork--sibling-titles (node)
   "Returns the titles of all sibling nodes of NODE.
