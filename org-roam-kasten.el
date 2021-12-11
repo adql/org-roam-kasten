@@ -40,8 +40,10 @@
 
 (defvar ork-buffer-name "*Zettelkasten*")
 
-(defvar ork-index-tag "@topic"
-  "Tag defining zettelkasten entry nodes.")
+(defvar ork-index-tag-re "^@.+"
+  "Tag defining zettelkasten entry nodes.
+
+All entry nodes will be included in the completion buffer.")
 
 (defvar ork-directory-file-node-re "0_.*"
   "Regex for the file holding a file-level node for the directory.")
@@ -215,10 +217,12 @@ The buffer name is determined by `ork-buffer-name'."
 ;;;;;; Predicates
 
 (defun ork--index-p (node)
-  "Query whether the node is an index node. Only nodes tagged
-with `ork-index-tag' will be included in the
-completion buffer."
-  (member ork-index-tag (org-roam-node-tags node)))
+  "Query whether the node is an index node.
+
+An index node is defined by having a tag that matches
+`ork-index-tag-re'."
+  (seq-filter (apply-partially 'string-match-p ork-index-tag-re)
+              (org-roam-node-tags node)))
 
 (defun ork--directory-node-p (node)
   "Return non-nil if the current node is the current directory's directory-node."
