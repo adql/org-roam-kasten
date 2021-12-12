@@ -340,12 +340,31 @@ preceding nodes, the second of following nodes."
           (list (seq-take nodes-at-level node-index) (seq-drop nodes-at-level (1+ node-index))))))))
 
 (defun ork--parent-node (node)
-  (with-current-buffer (org-roam-node-find-noselect node)
-    (unless (not (org-current-level))
-      (while (and
-              (org-up-heading-or-point-min)
-              (not (org-roam-node-at-point))))
-      (org-roam-node-at-point))))
+  (if (> (org-roam-node-level node) 0)
+      (with-current-buffer (org-roam-node-find-noselect node)
+        (while (and
+                (org-up-heading-or-point-min)
+                (not (org-roam-node-at-point))))
+        (org-roam-node-at-point))
+    (let ((dir (file-name-directory (org-roam-node-file node)))
+          parent-node)
+      (when (ork--directory-node-p node)
+        (setq dir (file-name-directory (directory-file-name dir))))
+      (while (and (not parent-node)
+                  (>= (length dir) (length (expand-file-name org-roam-directory))))
+        (setq parent-node (ork--directory-node dir))
+        (setq dir (file-name-directory (directory-file-name dir))))
+      parent-node)))
+
+(defun ork--directory-node (directory)
+  "Find the directory node of DIRECTORY.
+nil if none."
+  (let ((node-file (car (directory-files directory t ork-directory-file-node-re))))
+    (when node-file
+      (with-current-buffer (find-file-noselect node-file)
+        (org-with-wide-buffer
+         (goto-char (point-min))
+         (org-roam-node-at-point))))))
 
 ;;;;;; Buffer manipulation
 
