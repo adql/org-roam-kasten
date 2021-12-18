@@ -40,7 +40,7 @@
 
 (defvar ork-buffer-name "*Zettelkasten*")
 
-(defvar org-entry-tag-re "^@.+"
+(defvar ork-entry-tag-re "^@.+"
   "Tag defining zettelkasten entry nodes.
 All entry nodes will be included in the completion buffer.")
 
@@ -219,8 +219,8 @@ The buffer name is determined by `ork-buffer-name'."
   "Query whether the node is an entry node.
 
 An entry node is defined by having a tag that matches
-`org-entry-tag-re'."
-  (seq-filter (apply-partially 'string-match-p org-entry-tag-re)
+`ork-entry-tag-re'."
+  (seq-filter (apply-partially 'string-match-p ork-entry-tag-re)
               (org-roam-node-tags node)))
 
 (defun ork--directory-node-p (node)
