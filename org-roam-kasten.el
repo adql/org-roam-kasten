@@ -40,9 +40,8 @@
 
 (defvar ork-buffer-name "*Zettelkasten*")
 
-(defvar ork-index-tag-re "^@.+"
+(defvar org-entry-tag-re "^@.+"
   "Tag defining zettelkasten entry nodes.
-
 All entry nodes will be included in the completion buffer.")
 
 (defvar ork-directory-file-node-re "0_.*"
@@ -72,7 +71,7 @@ All entry nodes will be included in the completion buffer.")
   "Find a node for entering the zettelkasten."
   (interactive current-prefix-arg)
   (let* ((node (org-roam-node-read initial-input
-                                   'ork--index-p
+                                   'ork--entry-p
                                    'org-roam-node-read-sort-by-file-mtime
                                    t))
          (kasten (ork--get-buffer-create)))
@@ -216,12 +215,12 @@ The buffer name is determined by `ork-buffer-name'."
 
 ;;;;;; Predicates
 
-(defun ork--index-p (node)
-  "Query whether the node is an index node.
+(defun ork--entry-p (node)
+  "Query whether the node is an entry node.
 
-An index node is defined by having a tag that matches
-`ork-index-tag-re'."
-  (seq-filter (apply-partially 'string-match-p ork-index-tag-re)
+An entry node is defined by having a tag that matches
+`org-entry-tag-re'."
+  (seq-filter (apply-partially 'string-match-p org-entry-tag-re)
               (org-roam-node-tags node)))
 
 (defun ork--directory-node-p (node)
@@ -429,9 +428,7 @@ If FOLDED, fold the heading.'"
     (let ((inhibit-read-only t))
       (erase-buffer)
       (insert "# ~~~ Zettelkasten ~~~\n\n")
-      (if (ork--index-p ork--current-node)
-          (ork--insert-index)
-        (ork--insert-zettel folded)))))
+      (ork--insert-zettel folded))))
 
 (defun ork--load-refresh (node &optional preserve-history folded)
   "Loads NODE and refreshes the buffer.
