@@ -194,7 +194,7 @@ current parent zettel."
 (defun ork-store-link ()
   "Store the link to the node currently in display."
   (interactive)
-  (with-current-buffer (org-roam-node-find-noselect ork--current-node)
+  (org-with-point-at (org-roam-node-marker ork--current-node)
     (org-store-link nil t)))
 
 ;;;;; Private
@@ -239,9 +239,8 @@ An entry node is defined by having a tag that matches
 (defun ork--node-content (node)
   "Extract the content of NODE until the next sibling or child,
 excluding the property drawer."
-  (with-current-buffer (org-roam-node-find-noselect node)
+  (org-with-point-at (org-roam-node-marker node)
     (org-with-wide-buffer
-     (goto-char (org-roam-node-point node))
      (let* ((content-begin-re (if (= 0 (org-roam-node-level node))
                                   "^[^#: ]"
                                 ":end:\n+"))
@@ -268,7 +267,7 @@ the current parent heading."
                                   (org-forward-heading-same-level 1)))
                     (prev #'outline-previous-heading)
                     (t #'outline-next-heading))))
-      (with-current-buffer (org-roam-node-find-noselect node t)
+      (org-with-point-at (org-roam-node-marker node)
         (org-with-wide-buffer
          (while (and (funcall fn)
                      (not (org-entry-get (point) "ID"))))
@@ -305,7 +304,7 @@ If ROOT, only consider level-0 nodes."
     next-node))
 
 (defun ork--child-nodes (node)
-  (with-current-buffer (org-roam-node-find-noselect node)
+  (org-with-point-at (org-roam-node-marker node)
     (let* ((level (org-roam-node-level node))
            (node-tree (org-map-entries 'org-roam-node-at-point nil
                                        (if (= level 0) 'file 'tree)))
@@ -327,7 +326,7 @@ If ROOT, only consider level-0 nodes."
   "Returns the titles of all sibling nodes of NODE.
 The titles are returned as a list of two lists, the first of
 preceding nodes, the second of following nodes."
-  (with-current-buffer (org-roam-node-find-noselect node)
+  (org-with-point-at (org-roam-node-marker node)
     (let ((level (org-roam-node-level node)))
       (if (zerop level)
           '(nil nil)
@@ -340,7 +339,7 @@ preceding nodes, the second of following nodes."
 
 (defun ork--parent-node (node)
   (if (> (org-roam-node-level node) 0)
-      (with-current-buffer (org-roam-node-find-noselect node)
+      (org-with-point-at (org-roam-node-marker node)
         (while (and
                 (org-up-heading-or-point-min)
                 (not (org-roam-node-at-point))))
