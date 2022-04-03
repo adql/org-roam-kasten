@@ -1,6 +1,6 @@
 ;;; org-roam-kasten.el --- Browse your zettelkasten with a "physical" feeling  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2021 Amir Dekel
+;; Copyright (C) 2022 Amir Dekel
 
 ;; Author: Amir Dekel
 ;; URL: https://example.com/package-name.el
