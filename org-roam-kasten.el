@@ -32,41 +32,9 @@
 (require 'org-roam)
 (require 'cl-lib)                       ;technically it's already required by org-roam
 
+(require 'ork-core)
 (require 'ork-buffer)
 (require 'ork-get)
-
-;;;; Customization
-
-;; TODO
-
-;;;; Variables
-
-(defvar ork-entry-tag-re "^@.+"
-  "Tag defining zettelkasten entry nodes.
-All entry nodes will be included in the completion buffer.")
-
-(defvar ork-directory-file-node-re "0_.*"
-  "Regex for the file holding a file-level node for the directory.")
-
-;;;;; Keymaps
-
-;; TODO: Use separate keymap; possible with the template's snippet.
-
-;;;; Commands
-
-;;;###autoload
-(defun ork-enter (&optional other-window initial-input)
-  "Find a node for entering the zettelkasten."
-  (interactive current-prefix-arg)
-  (let* ((node (org-roam-node-read initial-input
-                                   'ork--entry-p
-                                   'org-roam-node-read-sort-by-file-mtime
-                                   t))
-         (kasten (ork-buffer-get-buffer-create)))
-    (set-buffer kasten)
-    (ork-buffer-load-refresh node)
-    (switch-to-buffer kasten)
-    (recenter)))
 
 ;;;; Footer
 

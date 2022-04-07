@@ -27,10 +27,6 @@
 
 ;; TODO
 
-;;;; Requirements
-
-(require 'ork-get)
-
 ;;;; Variables
 
 (defvar ork-buffer-name "*Zettelkasten*")
