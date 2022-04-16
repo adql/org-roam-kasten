@@ -40,7 +40,7 @@ All entry nodes will be included in the completion buffer.")
 
 ;;;;;; Predicates
 
-(defun ork--entry-p (node)
+(defun ork-get-entry-p (node)
   "Query whether the node is an entry node.
 
 An entry node is defined by having a tag that matches
@@ -48,7 +48,7 @@ An entry node is defined by having a tag that matches
   (seq-filter (apply-partially 'string-match-p ork-entry-tag-re)
               (org-roam-node-tags node)))
 
-(defun ork--directory-node-p (node)
+(defun ork-get--directory-node-p (node)
   "Return non-nil if the current node is the current directory's directory-node."
   (and (= 0 (org-roam-node-level node))
        (string-match-p ork-directory-file-node-re
@@ -56,7 +56,7 @@ An entry node is defined by having a tag that matches
 
 ;;;;;; Retrieval of content, metadata, related nodes, etc.
 
-(defun ork--node-content (node)
+(defun ork-get-node-content (node)
   "Extract the content of NODE until the next sibling or child,
 excluding the property drawer."
   (org-with-point-at (org-roam-node-marker node)
@@ -72,14 +72,14 @@ excluding the property drawer."
            ""
          (buffer-substring-no-properties content-begin content-end))))))
 
-(defun ork--next-node (node &optional prev same-level)
+(defun ork-get-next-node (node &optional prev same-level)
   "Find the next node, corresponding to the next \"physical\" zettel.
 If PREV is non-nil then find the previous node. If SAME-LEVEL is
 non-nil then find the next or previous node at the same level under
 the current parent heading."
   (if (and same-level
-           (= 0 ork--current-level))    ;FIXME -- shouldn't refer to buffer
-      (ork--next-node-other-file node prev t)
+           (= 0 ork-buffer--current-level))    ;FIXME -- shouldn't refer to buffer
+      (ork-get--next-node-other-file node prev t)
     (let ((begin (org-roam-node-point node))
           (fn (cond ((and prev same-level) (lambda ()
                                              (org-backward-heading-same-level 1)))
@@ -92,10 +92,10 @@ the current parent heading."
          (while (and (funcall fn)
                      (not (org-entry-get (point) "ID"))))
          (if (equal node (org-roam-node-at-point))
-             (ork--next-node-other-file node prev)
+             (ork-get--next-node-other-file node prev)
            (org-roam-node-at-point)))))))
 
-(defun ork--next-node-other-file (node &optional prev root)
+(defun ork-get--next-node-other-file (node &optional prev root)
   "find the first node in a file next to that of NODE.
 If PREV, find the last node in a previous file.
 If ROOT, only consider level-0 nodes."
@@ -123,7 +123,7 @@ If ROOT, only consider level-0 nodes."
         (setq next-index (+ add next-index))))
     next-node))
 
-(defun ork--child-nodes (node)
+(defun ork-get-child-nodes (node)
   (org-with-point-at (org-roam-node-marker node)
     (let* ((level (org-roam-node-level node))
            (node-tree (org-map-entries 'org-roam-node-at-point nil
@@ -131,8 +131,8 @@ If ROOT, only consider level-0 nodes."
            (heading-child-nodes (seq-filter (lambda (node)
                                               (= (+ level 1) (org-roam-node-level node)))
                                             node-tree)))
-      (if (ork--directory-node-p node)
-          (append (seq-filter (lambda (node) (not (ork--directory-node-p node)))
+      (if (ork-get--directory-node-p node)
+          (append (seq-filter (lambda (node) (not (ork-get--directory-node-p node)))
                               (mapcar (lambda (file)
                                         (let ((query (vector :select 'id :from 'nodes
                                                              :where `(and (= level 0)
@@ -142,7 +142,7 @@ If ROOT, only consider level-0 nodes."
                   heading-child-nodes)
         heading-child-nodes))))
 
-(defun ork--sibling-titles (node)
+(defun ork-get-sibling-titles (node)
   "Returns the titles of all sibling nodes of NODE.
 The titles are returned as a list of two lists, the first of
 preceding nodes, the second of following nodes."
@@ -157,7 +157,7 @@ preceding nodes, the second of following nodes."
                (node-index (seq-position nodes-at-level (org-roam-node-title node))))
           (list (seq-take nodes-at-level node-index) (seq-drop nodes-at-level (1+ node-index))))))))
 
-(defun ork--parent-node (node)
+(defun ork-get-parent-node (node)
   (if (> (org-roam-node-level node) 0)
       (org-with-point-at (org-roam-node-marker node)
         (while (and
@@ -166,15 +166,15 @@ preceding nodes, the second of following nodes."
         (org-roam-node-at-point))
     (let ((dir (file-name-directory (org-roam-node-file node)))
           parent-node)
-      (when (ork--directory-node-p node)
+      (when (ork-get--directory-node-p node)
         (setq dir (file-name-directory (directory-file-name dir))))
       (while (and (not parent-node)
                   (>= (length dir) (length (expand-file-name org-roam-directory))))
-        (setq parent-node (ork--directory-node dir))
+        (setq parent-node (ork-get--directory-node dir))
         (setq dir (file-name-directory (directory-file-name dir))))
       parent-node)))
 
-(defun ork--directory-node (directory)
+(defun ork-get--directory-node (directory)
   "Find the directory node of DIRECTORY.
 nil if none."
   (let ((node-file (car (directory-files directory t ork-directory-file-node-re))))

@@ -46,7 +46,7 @@
   "Find a node for entering the zettelkasten."
   (interactive current-prefix-arg)
   (let* ((node (org-roam-node-read initial-input
-                                   'ork--entry-p
+                                   'ork-get-entry-p
                                    'org-roam-node-read-sort-by-file-mtime
                                    t))
          (kasten (ork-buffer-get-buffer-create)))
