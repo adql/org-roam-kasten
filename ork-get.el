@@ -27,6 +27,15 @@
 
 ;; TODO
 
+;;;; Variables
+
+(defvar ork-entry-tag-re "^@.+"
+  "Tag defining zettelkasten entry nodes.
+All entry nodes will be included in the completion buffer.")
+
+(defvar ork-directory-file-node-re "0_.*"
+  "Regex for the file holding a file-level node for the directory.")
+
 ;;;; Functions
 
 ;;;;;; Predicates
