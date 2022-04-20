@@ -174,7 +174,8 @@ The buffer name is determined by `ork-buffer-name'."
         (org-mode)
         (org-roam-kasten-mode)
         (read-only-mode)
-        (setq ork-buffer--buffer t))
+        (setq org-hide-emphasis-markers t
+              ork-buffer--buffer t))
       buf)))
 
 (defun ork-buffer--buffer-p ()
