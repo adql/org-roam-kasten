@@ -224,6 +224,15 @@ This means inserting `ork-buffer--current-title' and `ork-buffer--current-conten
 alongside information about folgezettel."
   (insert "# " (int-to-string (length ork-buffer--current-child-nodes)) " folgezettel\n\n")
   (insert "* " ork-buffer--current-title "\n\n" ork-buffer--current-content)
+  (when (and (member 'children ork-buffer--current-display-properties)
+             (consp ork-buffer--current-child-nodes))
+    (insert "* Children\n\n")
+    (mapc (lambda (node)
+            (let ((id (org-roam-node-id node))
+                  (title (org-roam-node-title node)))
+              (insert "- " (org-link-make-string (concat "id:" id) title) "\n")))
+          ork-buffer--current-child-nodes)
+    (outline-previous-heading))
   (outline-previous-heading)
   (when folded
     (org-cycle-internal-local)))
