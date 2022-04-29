@@ -218,7 +218,7 @@ to ork-buffer--history (used when moving back/forwards in history)."
             (insert "** " folge-title)
           (insert "# " (int-to-string (length ork-buffer--current-child-nodes)) " folgezettel"))))))
 
-(defun ork-buffer--insert-zettel (&optional folded)
+(defun ork-buffer--insert-node (&optional folded)
   "Display the currently loaded node as a zettel.
 This means inserting `ork-buffer--current-title' and `ork-buffer--current-content'
 alongside information about folgezettel."
@@ -248,7 +248,7 @@ If FOLDED, fold the heading.'"
     (let ((inhibit-read-only t))
       (erase-buffer)
       (insert "# ~~~ Zettelkasten ~~~\n\n")
-      (ork-buffer--insert-zettel folded))))
+      (ork-buffer--insert-node folded))))
 
 (defun ork-buffer-load-refresh (node &optional preserve-history folded)
   "Loads NODE and refreshes the buffer.
