@@ -36,6 +36,16 @@ All entry nodes will be included in the completion buffer.")
 (defvar ork-directory-file-node-re "0_.*"
   "Regex for the file holding a file-level node for the directory.")
 
+(defvar ork-tag-display-properties '()
+  "An Alist where each item's CAR is a string, representing a node tag,
+and its CDR is a list of display properties for nodes matching that tag.
+
+Valid display properties are: `children'.
+
+The display properties which are the value of the first tag match will
+be applied to the node. A special item whose key is `default' will apply
+to all the nodes which don't have a matching tag.")
+
 ;;;; Functions
 
 ;;;;;; Predicates
@@ -71,6 +81,16 @@ excluding the property drawer."
        (if (<= content-end content-begin)
            ""
          (buffer-substring-no-properties content-begin content-end))))))
+
+(defun ork-get-display-properties (node)
+  "Determine the node's display properties based on its tags and
+`ork-tag-display-properties'"
+  (or
+   (car (seq-filter 'consp
+                    (mapcar (lambda (tag)
+                              (cdr (assoc tag ork-tag-display-properties)))
+                            (org-roam-node-tags node))))
+   (cdr (assoc 'default ork-tag-display-properties))))
 
 (defun ork-get-next-node (node &optional prev same-level)
   "Find the next node, corresponding to the next \"physical\" zettel.

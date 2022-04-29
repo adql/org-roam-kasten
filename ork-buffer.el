@@ -39,6 +39,7 @@
 (defvar-local ork-buffer--current-title nil)
 (defvar-local ork-buffer--current-level nil)
 (defvar-local ork-buffer--current-content nil)
+(defvar-local ork-buffer--current-display-properties nil)
 (defvar-local ork-buffer--current-child-nodes nil)
 (defvar-local ork-buffer--currently-examining-folgezettel nil)
 
@@ -198,6 +199,7 @@ to ork-buffer--history (used when moving back/forwards in history)."
           ork-buffer--current-title (org-roam-node-title node)
           ork-buffer--current-level (org-roam-node-level node)
           ork-buffer--current-content (ork-get-node-content node)
+          ork-buffer--current-display-properties (ork-get-display-properties node)
           ork-buffer--current-child-nodes (ork-get-child-nodes node)
           ork-buffer--currently-examining-folgezettel nil)))
 
