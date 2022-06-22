@@ -23,7 +23,7 @@ _Ork_ doesn't make any visual modifications to the browser buffer. It is recomme
 
 The entry point to _Ork_ is with `ork-enter`. This will open an `org-roam-node-read` (like `find`, but for finding existing nodes only) minibuffer with the entry nodes [of your choice](#entry-tags).
 
-Choose a node. A special read-only buffer named `\*Zettelkasten\*` will open, displaying that node with point at the folded heading. Here `TAB` has a special behavior: when first press, it will unfold the heading. Afterwards it will navigate (i.e. move point) between the links in the node, with `S-TAB` for navigating backwards. Press `ENT` to follow the link at point, all within the `\*Zettelkasten\*` buffer.
+Choose a node. A special read-only buffer named `*Zettelkasten*` will open, displaying that node with point at the folded heading. Here `TAB` has a special behavior: when first press, it will unfold the heading. Afterwards it will navigate (i.e. move point) between the links in the node, with `S-TAB` for navigating backwards. Press `ENT` to follow the link at point, all within the `*Zettelkasten*` buffer.
 
 The other default keybindings are in spirit of Emacs' `Info` mode:
 
